@@ -15,27 +15,27 @@ import {requireAuth} from './middlewares/auth.middleware.js';
 
 const app = express();
 
+app.use(cors({
+  origin: config.corsOrigin,
+  credentials: true
+}));
+
+app.use(cookieParser());
+
 app.use(express.json());
 
 app.get("/health", (req, res) => {
   res.json({ok: true});
 });
 
-app.use(cookieParser());
-
-app.use(cors({
-  origin: config.corsOrigin,
-  credentials: true
-}));
-
+app.use("/api/auth", authRoutes);
 app.use("/api/people", requireAuth, peopleRoutes);
 app.use("/api/interactions", requireAuth, interactionsRoutes);
 app.use("/api/reminders", requireAuth, remindersRoutes);
 app.use("/api/reminders", requireAuth, reminderStatesRoutes);
-app.use("/api/daily-reminders", requireAuth, dailyRemindersRoutes);
+app.use("/api/daily-reminders", dailyRemindersRoutes);
 app.use("/api", relationshipScoreRoutes);
 app.use("/api/topics", requireAuth, topicsRoutes);
-app.use("/api/auth", authRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

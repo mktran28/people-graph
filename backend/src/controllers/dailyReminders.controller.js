@@ -14,7 +14,9 @@ export async function runDailyRemindersHandler(req, res) {
 export async function getTodayRemindersHandler(req, res) {
     try {
         const runDate = req.query.date ?? null;
-        const result = await getDailyReminders(req.user.id, runDate);
+        const user_id = req.user.id;
+        const result = await getDailyReminders(user_id, runDate);
+
         res.json({count: result.people.length, ...result});
     } catch (err) {
         console.error(err);
