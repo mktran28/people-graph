@@ -44,7 +44,7 @@ export default function Dashboard() {
                     {items.map((p) => (
                         <li key = {p.id} className = "border rounded-xl p-4 flex items-center justify-between">
                             <div>
-                                <div className = "font-semibold">{p.name}</div>
+                                <div className = " text-lg font-semibold">{p.name}</div>
                                 <div className = "text-sm opacity-70">Priority {p.priority} every {p.contact_frequency_days} days</div>
                                 <div>
                                     {p.last_interaction_at && (
