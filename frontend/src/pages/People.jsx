@@ -92,6 +92,62 @@ export default function People() {
 
             {error && <div className = "text-red-600">{error}</div>}
 
+            {loading ? (
+                <div>Loading people...</div>
+            ) : sorted.length === 0 ? (
+                <div className = "text-sm opacity-70">Add the first person.</div>
+            ) : (
+                <ul className = "space-y-3">
+                    {sorted.map((p) => (
+                        <li key = {p.id} className = "border rounded-lg p-4 bg-white shadow-sm">
+                            <div className = "flex items-start justify-between gap-4">
+                                <div className = "min-w-0">
+                                    <div className = "flex items-center gap-2">
+                                        <Link
+                                            to = {`/people/${p.id}`}
+                                            className = "text-lg font-semibold hover:underline"
+                                        >
+                                            {p.name}
+                                        </Link>
+
+                                        <span className = "text-xs px-2 py-1 rounded-xl border">
+                                            {p.category || "uncategorized"}
+                                        </span>
+
+                                        <span className = "text-xs px-2 py-1 rounded-xl border">
+                                            {priorityLabel(p.priority)}
+                                        </span>
+                                    </div>
+
+                                    <div className = "mt-1 text-sm">
+                                        Every <span className = "font-medium">{p.contact_frequency_days}</span> days
+                                    </div>
+
+                                    <div className = "mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                        <div>
+                                            <span>Score:</span>{" "}
+                                            <span className = "font-medium">{(p.relationship_score ?? 0).toFixed?.(2) ?? (p.relationship_score ?? 0)}</span>
+                                        </div>
+
+                                        <div>
+                                            <span>Last:</span>{" "}
+                                            <span className = "font-medium">{p.last_interaction_at ? new Date(p.last_interaction_at).toLocaleDateString() : "Never"}</span>
+                                        </div>
+                                    </div>
+
+                                    {p.notes && (
+                                        <div className = "mt-3 text-xs">
+                                            <span className = "font-medium">Notes:</span>{" "}
+                                            {p.notes}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
             <form onSubmit = {handleCreate} className = "border rounded-xl p-4 space-y-3">
                 <div className = "text-lg font-semibold">Add person</div>
 
@@ -165,63 +221,6 @@ export default function People() {
 
                 <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled={saving}>{saving ? "Saving..." : "Create"}</button>
             </form>
-
-            {loading ? (
-                <div>Loading people...</div>
-            ) : sorted.length === 0 ? (
-                <div className = "text-sm opacity-70">Add the first person.</div>
-            ) : (
-                <ul className = "space-y-3">
-                    {sorted.map((p) => (
-                        <li key = {p.id} className = "border rounded-lg p-4 bg-white shadow-sm">
-                            <div className = "flex items-start justify-between gap-4">
-                                <div className = "min-w-0">
-                                    <div className = "flex items-center gap-2">
-                                        <Link
-                                            to = {`/people/${p.id}`}
-                                            className = "text-lg font-semibold hover:underline"
-                                        >
-                                            {p.name}
-                                        </Link>
-
-                                        <span className = "text-xs px-2 py-1 rounded-xl border">
-                                            {p.category || "uncategorized"}
-                                        </span>
-
-                                        <span className = "text-xs px-2 py-1 rounded-xl border">
-                                            {priorityLabel(p.priority)}
-                                        </span>
-                                    </div>
-
-                                    <div className = "mt-1 text-sm">
-                                        Every <span className = "font-medium">{p.contact_frequency_days}</span> days
-                                    </div>
-
-                                    <div className = "mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                        <div>
-                                            <span>Score:</span>{" "}
-                                            <span className = "font-medium">{(p.relationship_score ?? 0).toFixed?.(2) ?? (p.relationship_score ?? 0)}</span>
-                                        </div>
-
-                                        <div>
-                                            <span>Last:</span>{" "}
-                                            <span className = "font-medium">{p.last_interaction_at ? new Date(p.last_interaction_at).toLocaleDateString() : "Never"}</span>
-                                        </div>
-                                    </div>
-
-                                    {p.notes && (
-                                        <div className = "mt-3 text-xs">
-                                            Notes: {p.notes}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className = "text-xs border rounded-xl px-2 py-1">#{p.id}</div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
         </div>
     );
 }
