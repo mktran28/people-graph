@@ -23,3 +23,7 @@ export function deletePerson(id) {
         method: "DELETE"
     })
 }
+
+export function getSummary(id) {
+    return apiFetch(`/api/people/${id}/summary?halfLifeDays=30`);
+}
