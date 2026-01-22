@@ -60,6 +60,8 @@ export default function PersonDetail() {
                 topics: topicList,
             });
 
+            await load();
+
             setNotes("");
             setTopics("");
         } catch (error) {
@@ -132,7 +134,7 @@ export default function PersonDetail() {
                 
                     <div className = "text-sm mt-2">Relationship score:{" "}{person.score_half_life_days ? `half-life ${person.score_half_life_days}d` : null}</div>
 
-                    <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at} ? formatDate(person.last_interaction_at): "never"</div>
+                    <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDate(person.last_interaction_at): "never"}</div>
                 </div>
 
                 <div className = "flex flex-col gap-2">
@@ -145,63 +147,73 @@ export default function PersonDetail() {
             {person.notes && (
                 <div className = "border rounded-xl p-4">
                     <div className = "font-semibold mb-1">Notes</div>
-                    <div className = "text-sm white-space-wrap">{person.notes}</div>
+                    <div className = "text-sm whitespace-wrap">{person.notes}</div>
                 </div>
             )}
 
-            <form>
-                <div>Log interaction</div>
-
-                <div>
-                    <div>
-                        <label>Type</label>
-
-                        <select>
-                            <option>Message</option>
-                            <option>Call</option>
-                            <option>Meeting</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label>Topics (comma-separated)</label>
-
-                        <input />
-                    </div>
-                </div>
-
-                <div>
-                    <label>Notes</label>
-                    <textarea />
-                </div>
-
-                <button>{saving ? "Saving..." : "Save interaction"}</button>
-            </form>
-
-            <div>
-                <div>Recent interactions</div>
+            <div className = "border rounded-xl p-4">
+                <div className = "font-semibold mb-3">Recent interactions</div>
 
                 {recent_interactions.length === 0 ? (
-                    <div>No interactions yet.</div>
+                    <div className = "text-sm opacity-70">No interactions yet.</div>
                 ) : (
-                    <ul>
+                    <ul className = "space-y-3">
                         {recent_interactions.map((it) => (
-                            <li>
-                                <div>
+                            <li key = {it.id} className = "border rounded-xl p-3">
+                                <div className = "flex items-start justify-between gap-3">
                                     <div>
-                                        <div> {it.type}{" "} <span>{formatDate(it.occurred_at)}</span></div>
+                                        <div className = "text-sm font-semibold"> {it.type}{" "}{formatDate(it.occurred_at)}</div>
 
-                                        {it.notes && (<div>{it.notes}</div>)}
+                                        {it.notes && (<div className = "text-sm mt-1 whitespace-pre-wrap">{it.notes}</div>)}
                                     </div>
 
-                                    <button>Delete</button>
+                                    <button className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => handleDeleteInteraction(it.id)}>Delete</button>
                                 </div>
                             </li>
                         ))}
                     </ul>
                 )}
             </div>
+
+            <form onSubmit = {handleAddInteraction} className = "border rounded-xl p-4 space-y-3">
+                <div className = "font-semibold">Log interaction</div>
+
+                <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label className = "block text-sm mb-1">Type</label>
+
+                        <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
+                            <option value = "message">Message</option>
+                            <option value = "call">Call</option>
+                            <option value = "meeting">Meeting</option>
+                            <option value = "other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className = "block text-sm mb-1">Topics (comma-separated)</label>
+
+                        <input 
+                            className = "w-full border rounded-xl px-3 py-2" 
+                            value = {topics} 
+                            onChange = {(e) => setTopics(e.target.value)} 
+                            placeholder = "e.g., school"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label className = "block text-sm mb-1">Notes</label>
+                    <textarea 
+                        className = "w-full border rounded-xl px-3 py-2"
+                        rows = {3}
+                        value = {notes}
+                        onChange = {(e) => setNotes(e.target.value)}
+                        placeholder = "What did you talk about?"
+                    />
+                </div>
+
+                <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {saving}>{saving ? "Saving..." : "Save interaction"}</button>
+            </form>
 
             {error && <div className = "text-red-600">{error}</div>}
         </div>
