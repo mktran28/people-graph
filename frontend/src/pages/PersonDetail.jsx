@@ -124,9 +124,12 @@ export default function PersonDetail() {
 
      return (
         <div className = "space-y-6">
+            <div className = "text-sm opacity-70 flex items-center gap-2">
+                <Link to = "/people" className = "hover:underline">← Back to people</Link>
+            </div>
+
             <div className = "flex items-start justify-between gap-4">
                 <div>
-                    <Link to = "/people" className = "text-sm opacity-70 hover:underline">← Back to people</Link>
 
                     <h1 className = "text-2xl font-bold mt-1">{person.name}</h1>
 
@@ -137,7 +140,7 @@ export default function PersonDetail() {
                     <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDate(person.last_interaction_at): "never"}</div>
                 </div>
 
-                <div className = "flex flex-col gap-2">
+                <div className = "flex flex-row gap-2">
                     <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleSnooze(7)}>Snooze</button>
 
                     <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleDismiss(30)}>Dismiss</button>

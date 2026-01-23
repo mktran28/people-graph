@@ -76,7 +76,7 @@ export default function Dashboard() {
                     <div className = "text-xl opacity-70">Today's due reminders</div>
                 </div>
 
-                <button onClick = {runAndLoad} disabled = {running} className = "px-3 py-2 rounded-xl border text-sm disabled:opacity-70">{running ? "Refreshing...": "Recompute today"}</button>
+                <button onClick = {runAndLoad} disabled = {running} className = "px-3 py-2 rounded-xl border text-sm disabled:opacity-70">{running ? "Refreshing...": "Refresh"}</button>
             </div>
 
             {people.length === 0 ? (
