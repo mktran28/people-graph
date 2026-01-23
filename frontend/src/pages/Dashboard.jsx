@@ -80,7 +80,7 @@ export default function Dashboard() {
             </div>
 
             {people.length === 0 ? (
-                <div className = "text-sm opacity-70">No one is overdue today.</div>
+                <div className = "text-sm opacity-70">No one is overdue today</div>
             ) : (
                 <ul className = "space-y-3">
                     {people.map((p) => (

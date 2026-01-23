@@ -144,6 +144,8 @@ export default function PersonDetail() {
                 </div>
             </div>
 
+            {error && <div className="text-red-600">{error}</div>}
+
             {person.notes && (
                 <div className = "border rounded-xl p-4">
                     <div className = "font-semibold mb-1">Notes</div>
