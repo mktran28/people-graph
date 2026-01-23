@@ -1,6 +1,6 @@
 import {Link, useParams} from "react-router-dom";
-import {useEffect, useReducer, useState} from "react";
-import * as personApi from "../api/people.api.js";
+import {useEffect, useState} from "react";
+import * as peopleApi from "../api/people.api.js";
 import * as interactionsApi from "../api/interactions.api.js";
 import * as remindersApi from "../api/reminders.api.js";
 
@@ -23,15 +23,31 @@ export default function PersonDetail() {
     const [notes, setNotes] = useState("");
     const [topics, setTopics] = useState("");
     const [saving, setSaving] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [logging, setLogging] = useState(false);
+    const [editName, setEditName] = useState("");
+    const [editCategory, setEditCategory] = useState("");
+    const [editNotes, setEditNotes] = useState("");
+    const [editFrequency, setEditFrequency] = useState(30);
+    const [editPriority, setEditPriority] = useState(2);
+    const [savingPerson, setSavingPerson] = useState(false);
 
     async function load() {
         try {
             setError("");
             setLoading(true);
 
-            const data = await personApi.getSummary(person_id);
+            const data = await peopleApi.getSummary(person_id);
 
             setSummary(data);
+
+            const person = data.person;
+
+            setEditName(person.name ?? "");
+            setEditCategory(person.category ?? "");
+            setEditNotes(person.notes ?? "");
+            setEditFrequency(person.contact_frequency_days ?? 30);
+            setEditPriority(person.priority ?? 2)
         } catch (error) {
             setError(error.message);
         } finally {
@@ -44,6 +60,15 @@ export default function PersonDetail() {
             load();
         }
     }, [person_id])
+
+    useEffect(() => {
+        const openModal = editing || logging;
+        document.body.style.overflow = openModal ? "hidden" : "auto";
+
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [editing, logging])
 
     async function handleAddInteraction(e) {
         e.preventDefault();
@@ -64,6 +89,7 @@ export default function PersonDetail() {
 
             setNotes("");
             setTopics("");
+            setLogging(false);
         } catch (error) {
             setError(error.message);
         } finally {
@@ -104,6 +130,46 @@ export default function PersonDetail() {
         }
      }
 
+     async function handleSavePerson(e) {
+        e.preventDefault();
+        setError("");
+        setSavingPerson(true);
+
+        try {
+            await peopleApi.updatePerson(person_id, {
+                name: editName,
+                category: editCategory,
+                notes: editNotes,
+                contact_frequency_days: Number(editFrequency),
+                priority: Number(editPriority)
+            });
+
+            setEditing(false);
+            await load();
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setSavingPerson(false);
+        }
+     }
+
+     async function handleDeletePerson() {
+        const ok = confirm("Delete this person? This will also delete their interactions.");
+
+        if (!ok) {
+            return;
+        }
+
+        setError("");
+
+        try {
+            await peopleApi.deletePerson(person_id);
+            window.location.href = "/people";
+        } catch (error) {
+            setError(error.message);
+        }
+     }
+
      if (Number.isNaN(person_id)) {
         return <div>Invalid person id.</div>
      }
@@ -112,15 +178,12 @@ export default function PersonDetail() {
         return <div>Loading person...</div>
      }
 
-     if (error) {
-        return <div className = "text-red-600">{error}</div>
-     }
-
      if (!summary) {
         return <div>Not found.</div>
      }
 
      const {person, recent_interactions} = summary;
+     const busy = loading || saving || savingPerson;
 
      return (
         <div className = "space-y-6">
@@ -139,17 +202,18 @@ export default function PersonDetail() {
                 </div>
 
                 <div className = "flex flex-row gap-2">
-                    <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleSnooze(7)}>Snooze</button>
-                    <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleDismiss(30)}>Dismiss</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => setLogging(true)}>Log interaction</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleSnooze(7)}>Snooze</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleDismiss(30)}>Dismiss</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => {setEditing((value) => !value); setError("")}}>{editing ? "Cancel edit" : "Edit person"}</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm text-red-700 border-red-300" onClick = {handleDeletePerson}>Delete person</button>
                 </div>
             </div>
-
-            {error && <div className="text-red-600">{error}</div>}
 
             {person.notes && (
                 <div className = "border rounded-xl p-4">
                     <div className = "font-semibold mb-1">Notes</div>
-                    <div className = "text-sm whitespace-wrap">{person.notes}</div>
+                    <div className = "text-sm whitespace-pre-wrap">{person.notes}</div>
                 </div>
             )}
 
@@ -169,7 +233,7 @@ export default function PersonDetail() {
                                         {it.notes && (<div className = "text-sm mt-1 whitespace-pre-wrap">{it.notes}</div>)}
                                     </div>
 
-                                    <button className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => handleDeleteInteraction(it.id)}>Delete</button>
+                                    <button disabled = {busy} className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => handleDeleteInteraction(it.id)}>Delete</button>
                                 </div>
                             </li>
                         ))}
@@ -177,47 +241,129 @@ export default function PersonDetail() {
                 )}
             </div>
 
-            <form onSubmit = {handleAddInteraction} className = "border rounded-xl p-4 space-y-3">
-                <div className = "font-semibold">Log interaction</div>
+            {logging && (
+                <div className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick = {() => {setLogging(false); setError("")}}>
+                    <form onSubmit = {handleAddInteraction} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl" onClick = {(e) => e.stopPropagation()}>
+                        <div className = "font-semibold">Log interaction</div>
 
-                <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label className = "block text-sm mb-1">Type</label>
+                        {error && <div className = "text-red-600">{error}</div>}
 
-                        <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
-                            <option value = "message">Message</option>
-                            <option value = "call">Call</option>
-                            <option value = "meeting">Meeting</option>
-                            <option value = "other">Other</option>
-                        </select>
-                    </div>
+                        <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className = "block text-sm mb-1">Type</label>
 
-                    <div>
-                        <label className = "block text-sm mb-1">Topics (comma-separated)</label>
+                                <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
+                                    <option value = "message">Message</option>
+                                    <option value = "call">Call</option>
+                                    <option value = "meeting">Meeting</option>
+                                    <option value = "other">Other</option>
+                                </select>
+                            </div>
 
-                        <input 
-                            className = "w-full border rounded-xl px-3 py-2" 
-                            value = {topics} 
-                            onChange = {(e) => setTopics(e.target.value)} 
-                            placeholder = "e.g., school"/>
-                    </div>
+                            <div>
+                                <label className = "block text-sm mb-1">Topics (comma-separated)</label>
+
+                                <input 
+                                    className = "w-full border rounded-xl px-3 py-2" 
+                                    value = {topics} 
+                                    onChange = {(e) => setTopics(e.target.value)} 
+                                    placeholder = "e.g., school"/>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className = "block text-sm mb-1">Notes</label>
+                            <textarea 
+                                className = "w-full border rounded-xl px-3 py-2"
+                                rows = {3}
+                                value = {notes}
+                                onChange = {(e) => setNotes(e.target.value)}
+                                placeholder = "What did you talk about?"
+                            />
+                        </div>
+
+                        <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {busy}>{saving ? "Saving..." : "Save interaction"}</button>
+                    </form>
                 </div>
+            )}
 
-                <div>
-                    <label className = "block text-sm mb-1">Notes</label>
-                    <textarea 
-                        className = "w-full border rounded-xl px-3 py-2"
-                        rows = {3}
-                        value = {notes}
-                        onChange = {(e) => setNotes(e.target.value)}
-                        placeholder = "What did you talk about?"
-                    />
+            {editing && (
+                <div className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick = {() => {setEditing(false); setError("")}}>
+                    <form onSubmit = {handleSavePerson} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl" onClick = {(e) => e.stopPropagation()}>
+                        <div className = "font-semibold">Edit person</div>
+
+                        {error && <div className = "text-red-600">{error}</div>}
+
+                        <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className = "block text-sm mb-1">Name</label>
+
+                                <input 
+                                    className = "w-full border rounded-xl px-3 py-2"
+                                    value = {editName}
+                                    onChange = {(e) => setEditName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className = "block text-sm mb-1">Category</label>
+
+                                <select
+                                    className = "w-full border rounded-xl px-3 py-2"
+                                    value = {editCategory}
+                                    onChange = {(e) => setEditCategory(e.target.value)}
+                                >
+                                    <option value = "friend">Friend</option>
+                                    <option value = "family">Family</option>
+                                    <option value = "work">Work</option>
+                                    <option value = "other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className = "block text-sm mb-1">Contact frequency (days)</label>
+
+                                <input 
+                                    className = "w-full border rounded-xl px-3 py-2"
+                                    type = "number"
+                                    min = {1}
+                                    max = {3650}
+                                    value = {editFrequency}
+                                    onChange = {(e) => setEditFrequency(e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className = "block text-sm mb-1">Priority</label>
+
+                                <select
+                                    className = "w-full border rounded-xl px-3 py-2"
+                                    value = {editPriority}
+                                    onChange = {(e) => setEditPriority(e.target.value)}
+                                >
+                                    <option value = {1}>High (1)</option>
+                                    <option value = {2}>Normal (2)</option>
+                                    <option value = {3}>Low (3)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className = "block text-sm mb-1">Notes</label>
+
+                            <textarea 
+                                className = "w-full border rounded-xl px-3 py-2"
+                                rows = {3}
+                                value = {editNotes}
+                                onChange = {(e) => setEditNotes(e.target.value)}
+                            />
+                        </div>
+
+                        <button disabled = {savingPerson} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
+                    </form>
                 </div>
-
-                <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {saving}>{saving ? "Saving..." : "Save interaction"}</button>
-            </form>
-
-            {error && <div className = "text-red-600">{error}</div>}
+            )}
         </div>
      )
 }
