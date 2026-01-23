@@ -134,15 +134,12 @@ export default function PersonDetail() {
                     <h1 className = "text-2xl font-bold mt-1">{person.name}</h1>
 
                     <div className = "text-sm opacity-70">{person.category || "uncategorized"} | priority {person.priority} | Every {" "}{person.contact_frequency_days} days</div>
-                
                     <div className = "text-sm mt-2">Relationship score:{" "}{person.score_half_life_days ? `half-life ${person.score_half_life_days}d` : null}</div>
-
                     <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDate(person.last_interaction_at): "never"}</div>
                 </div>
 
                 <div className = "flex flex-row gap-2">
                     <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleSnooze(7)}>Snooze</button>
-
                     <button className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleDismiss(30)}>Dismiss</button>
                 </div>
             </div>
