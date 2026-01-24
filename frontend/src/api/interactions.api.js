@@ -12,3 +12,10 @@ export function deleteInteraction(id) {
         method: "DELETE"
     })
 }
+
+export function updateInteraction(id, payload) {
+    return apiFetch(`/api/interactions/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+    })
+}

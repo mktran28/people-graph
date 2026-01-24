@@ -106,10 +106,18 @@ export async function getPersonSummary(user_id, person_id) {
 
     const interactionsResult = await pool.query(
         `
-        SELECT *
-        FROM interactions
-        WHERE person_id = $1 AND user_id = $2
-        ORDER BY occurred_at DESC
+        SELECT
+            i.*,
+            COALESCE(
+                ARRAY_AGG(t.name) FILTER (WHERE t.name IS NOT NULL),
+                '{}'
+            ) AS topics
+        FROM interactions i
+        LEFT JOIN interaction_topics it ON it.interaction_id = i.id
+        LEFT JOIN topics t ON t.id = it.topic_id
+        WHERE i.person_id = $1 AND i.user_id = $2
+        GROUP BY i.id
+        ORDER BY i.occurred_at DESC
         LIMIT 10
         `,
         [person_id, user_id]
@@ -118,13 +126,13 @@ export async function getPersonSummary(user_id, person_id) {
     return {person, recent_interactions: interactionsResult.rows};
 }
 
-export async function personBelongsToUser(userId, person_id) {
+export async function personBelongsToUser(user_id, person_id) {
     const result = await pool.query(
         `
         SELECT 1 FROM people 
         WHERE id = $1 AND user_id = $2
         `,
-        [person_id, userId]
+        [person_id, user_id]
     );
 
     return result.rowCount > 0;

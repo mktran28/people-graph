@@ -23,14 +23,19 @@ export default function PersonDetail() {
     const [notes, setNotes] = useState("");
     const [topics, setTopics] = useState("");
     const [saving, setSaving] = useState(false);
-    const [editing, setEditing] = useState(false);
     const [logging, setLogging] = useState(false);
+    const [editing, setEditing] = useState(false);
     const [editName, setEditName] = useState("");
     const [editCategory, setEditCategory] = useState("");
     const [editNotes, setEditNotes] = useState("");
     const [editFrequency, setEditFrequency] = useState(30);
     const [editPriority, setEditPriority] = useState(2);
     const [savingPerson, setSavingPerson] = useState(false);
+    const [editingInteractionId, setEditingInteractionId] = useState(null);
+    const [editInteractionType, setEditInteractionType] = useState("message");
+    const [editInteractionNotes, setEditInteractionNotes] = useState("");
+    const [editInteractionTopics, setEditInteractionTopics] = useState("");
+    const [savingInteraction, setSavingInteraction] = useState(false);
 
     async function load() {
         try {
@@ -170,6 +175,36 @@ export default function PersonDetail() {
         }
      }
 
+     function startEditInteraction(interaction) {
+        setEditingInteractionId(interaction.id);
+        setEditInteractionType(interaction.type || "message");
+        setEditInteractionNotes(interaction.notes || "");
+        setEditInteractionTopics(Array.isArray(interaction.topics) ? interaction.topics.join(", ") : "");
+     }
+
+     async function handleSaveInteraction(e) {
+        e.preventDefault();
+        setError("");
+        setSavingInteraction(true);
+
+        try {
+            const topicList = editInteractionTopics.split(",").map((t) => t.trim()).filter(Boolean);
+
+            await interactionsApi.updateInteraction(editingInteractionId, {
+                type: editInteractionType,
+                notes: editInteractionNotes,
+                topics: topicList
+            });
+
+            setEditingInteractionId(null);
+            await load();
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setSavingInteraction(false);
+        }
+     }
+
      if (Number.isNaN(person_id)) {
         return <div>Invalid person id.</div>
      }
@@ -183,7 +218,7 @@ export default function PersonDetail() {
      }
 
      const {person, recent_interactions} = summary;
-     const busy = loading || saving || savingPerson;
+     const busy = loading || saving || savingPerson || savingInteraction;
 
      return (
         <div className = "space-y-6">
@@ -231,10 +266,57 @@ export default function PersonDetail() {
                                         <div className = "text-sm font-semibold"> {it.type}{" "}{formatDate(it.occurred_at)}</div>
 
                                         {it.notes && (<div className = "text-sm mt-1 whitespace-pre-wrap">{it.notes}</div>)}
+
+                                        {Array.isArray(it.topics) && it.topics.length > 0 && (
+                                            <div className = "mt-2 flex flex-wrap gap-2">
+                                                {it.topics.map((t) => (
+                                                    <span key = {t} className = "text-xs px-2 py-1 rounded-xl border">{t}</span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <button disabled = {busy} className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => handleDeleteInteraction(it.id)}>Delete</button>
+                                    <div className = "flex gap-2">
+                                        <button disabled = {busy} className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => startEditInteraction(it)}>Edit</button>
+                                        <button disabled = {busy} className = "text-xs px-2 py-1 rounded-xl border" onClick = {() => handleDeleteInteraction(it.id)}>Delete</button>
+                                    </div>
                                 </div>
+
+                                {editingInteractionId === it.id ? (
+                                    <form onSubmit = {handleSaveInteraction} className = "mt-3 space-y-2">
+                                        <div className = "grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <select 
+                                                className = "w-full border rounded-xl px-3 py-2 text-sm"
+                                                value = {editInteractionType}
+                                                onChange = {(e) => setEditInteractionType(e.target.value)}
+                                            >
+                                                <option value = "message">Message</option>
+                                                <option value = "call">Call</option>
+                                                <option value = "meeting">Meeting</option>
+                                                <option value = "other">Other</option>
+                                            </select>
+
+                                            <input 
+                                                className = "w-full border rounded-xl px-3 py-2 text-sm"
+                                                value = {editInteractionTopics}
+                                                onChange = {(e) => setEditInteractionTopics(e.target.value)}
+                                                placeholder = "Add topics..."
+                                            />
+                                        </div>
+
+                                        <textarea 
+                                            className = "w-full border rounded-xl px-3 py-2 text-sm"
+                                            rows = {3}
+                                            value = {editInteractionNotes}
+                                            onChange={(e) => setEditInteractionNotes(e.target.value)}
+                                        />
+
+                                        <div className = "flex gap-2">
+                                            <button disabled = {busy} className = "px-3 py-2 rounded-xl bg-black text-white text-sm disabled:opacity-70">{savingInteraction ? "Saving..." : "Save"}</button>
+                                            <button type = "button" className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => setEditingInteractionId(null)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                ) : null}
                             </li>
                         ))}
                     </ul>
@@ -360,7 +442,7 @@ export default function PersonDetail() {
                             />
                         </div>
 
-                        <button disabled = {savingPerson} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
+                        <button disabled = {busy} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
                     </form>
                 </div>
             )}
