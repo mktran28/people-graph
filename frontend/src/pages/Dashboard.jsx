@@ -3,14 +3,8 @@ import * as dailyApi from '../api/dailyReminders.api.js';
 import * as remindersApi from '../api/reminders.api.js';
 import {Link} from 'react-router-dom';
 import {useToast} from '../context/ToastContext.jsx';
-
-function formatDate(d) {
-    try {
-        return new Date(d).toLocaleString();
-    } catch {
-        return String(d);
-    }
-}
+import {formatDateTime, daysBetween} from '../utils/date.js';
+import {unwrapList, getErrorMessage} from '../utils/api.js';
 
 export default function Dashboard() {
     const [people, setPeople] = useState([]);
@@ -25,7 +19,7 @@ export default function Dashboard() {
 
     async function loadToday() {
         const data = await dailyApi.getToday();
-        const arr = (data && Array.isArray(data.people) && data.people) || (data && Array.isArray(data.items) && data.items) || (Array.isArray(data) ? data: []);
+        const arr = unwrapList(data, ["people", "items"]);
         setPeople(arr);
     }
 
@@ -37,7 +31,7 @@ export default function Dashboard() {
             await dailyApi.runToday();
             await loadToday();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setRunning(false);
         }
@@ -52,10 +46,11 @@ export default function Dashboard() {
         try {
             await remindersApi.snooze(person_id, days);
             await runAndLoad();
-            pushToast({type: "info", message: "Snoozed for 7 days"})
+            pushToast({type: "info", message: `Snoozed for ${days} days`})
         } catch (error) {
-            setError(error.message);
-            pushToast({type: "error", message: error.message})
+            const message = getErrorMessage(error);
+            setError(message);
+            pushToast({type: "error", message: message})
         }
     }
 
@@ -63,16 +58,12 @@ export default function Dashboard() {
         try {
             await remindersApi.dismiss(person_id, days);
             await runAndLoad()
-            pushToast({type: "info", message: "Dismissed for 30 days"})
+            pushToast({type: "info", message: `Dismissed for ${days} days`})
         } catch (error) {
-            setError(error.message);
-            pushToast({type: "error", message: error.message});
+            const message = getErrorMessage(error);
+            setError(message);
+            pushToast({type: "error", message: message})
         }
-    }
-
-    function daysBetween(a, b) {
-        const ms = 1000 * 60 * 60 * 24;
-        return Math.floor((a - b) / ms)
     }
 
     function countOverdueDays(person) {
@@ -210,7 +201,7 @@ export default function Dashboard() {
                                 <div>
                                     <Link to = {`/people/${p.id}`} className = "font-semibold hover:underline">{p.name}</Link>
                                     <div className = "text-sm opacity-70"> Priority {p.priority} every {p.contact_frequency_days} days</div>
-                                    <div className = "text-sm opacity-70"> Score:{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDate(p.last_interaction_at) : "never"}</div>
+                                    <div className = "text-sm opacity-70"> Score:{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDateTime(p.last_interaction_at) : "never"}</div>
                                     <div className = "text-sm opacity-70">
                                         {p.last_interaction_at ? (
                                             <>Overdue by {overdue ?? 0} days </>
