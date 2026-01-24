@@ -1,6 +1,8 @@
 import {useEffect, useMemo, useState} from "react";
 import {Link} from "react-router-dom";
 import * as peopleApi from "../api/people.api.js"
+import {getErrorMessage, unwrapList} from "../utils/api.js";
+import {formatDateOnly} from "../utils/date.js";
 
 function priorityLabel(p) {
     if (p === 1) {
@@ -41,9 +43,9 @@ export default function People() {
 
             const data = await peopleApi.listPeople();
 
-            setPeople(Array.isArray(data) ? data : (data.people ?? []));
+            setPeople(unwrapList(data, ["people"]));
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -87,7 +89,7 @@ export default function People() {
 
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setSaving(false);
         }
@@ -145,7 +147,7 @@ export default function People() {
 
                                         <div>
                                             <span>Last:</span>{" "}
-                                            <span className = "font-medium">{p.last_interaction_at ? new Date(p.last_interaction_at).toLocaleDateString() : "Never"}</span>
+                                            <span className = "font-medium">{p.last_interaction_at ? formatDateOnly(p.last_interaction_at) : "Never"}</span>
                                         </div>
                                     </div>
 
