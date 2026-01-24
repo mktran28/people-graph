@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import * as dailyApi from '../api/dailyReminders.api.js';
 import * as remindersApi from '../api/reminders.api.js';
 import {Link} from 'react-router-dom';
+import {useToast} from '../context/ToastContext.jsx';
 
 function formatDate(d) {
     try {
@@ -20,6 +21,7 @@ export default function Dashboard() {
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [overdueOnly, setOverdueOnly] = useState(false);
     const [sortBy, setSortBy] = useState("priority");
+    const {pushToast} = useToast();
 
     async function loadToday() {
         const data = await dailyApi.getToday();
@@ -50,8 +52,10 @@ export default function Dashboard() {
         try {
             await remindersApi.snooze(person_id, days);
             await runAndLoad();
+            pushToast({type: "info", message: "Snoozed for 7 days"})
         } catch (error) {
             setError(error.message);
+            pushToast({type: "error", message: error.message})
         }
     }
 
@@ -59,8 +63,10 @@ export default function Dashboard() {
         try {
             await remindersApi.dismiss(person_id, days);
             await runAndLoad()
+            pushToast({type: "info", message: "Dismissed for 30 days"})
         } catch (error) {
             setError(error.message);
+            pushToast({type: "error", message: error.message});
         }
     }
 

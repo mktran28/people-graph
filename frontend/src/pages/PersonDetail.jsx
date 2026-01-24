@@ -3,6 +3,8 @@ import {useEffect, useState} from "react";
 import * as peopleApi from "../api/people.api.js";
 import * as interactionsApi from "../api/interactions.api.js";
 import * as remindersApi from "../api/reminders.api.js";
+import ConfirmModal from "../components/ConfirmModal.jsx";
+import {useToast} from "../context/ToastContext.jsx";
 
 function formatDate(d) {
     try {
@@ -15,6 +17,7 @@ function formatDate(d) {
 export default function PersonDetail() {
     const {id} = useParams();
     const person_id = Number(id);
+    const {pushToast} = useToast();
 
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -36,6 +39,7 @@ export default function PersonDetail() {
     const [editInteractionNotes, setEditInteractionNotes] = useState("");
     const [editInteractionTopics, setEditInteractionTopics] = useState("");
     const [savingInteraction, setSavingInteraction] = useState(false);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
     async function load() {
         try {
@@ -157,20 +161,17 @@ export default function PersonDetail() {
             setSavingPerson(false);
         }
      }
-
+     
      async function handleDeletePerson() {
-        const ok = confirm("Delete this person? This will also delete their interactions.");
-
-        if (!ok) {
-            return;
-        }
-
+        setConfirmDeleteOpen(false);
         setError("");
 
         try {
             await peopleApi.deletePerson(person_id);
+            pushToast({type: "info", message: "Person deleted."});
             window.location.href = "/people";
         } catch (error) {
+            pushToast({type: "error", message: error.message});
             setError(error.message);
         }
      }
@@ -217,8 +218,8 @@ export default function PersonDetail() {
         return <div>Not found.</div>
      }
 
-     const {person, recent_interactions} = summary;
-     const busy = loading || saving || savingPerson || savingInteraction;
+    const {person, recent_interactions} = summary;
+    const busy = loading || saving || savingPerson || savingInteraction;
 
      return (
         <div className = "space-y-6">
@@ -241,7 +242,7 @@ export default function PersonDetail() {
                     <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleSnooze(7)}>Snooze</button>
                     <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => handleDismiss(30)}>Dismiss</button>
                     <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm" onClick = {() => {setEditing((value) => !value); setError("")}}>{editing ? "Cancel edit" : "Edit person"}</button>
-                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm text-red-700 border-red-300" onClick = {handleDeletePerson}>Delete person</button>
+                    <button disabled = {busy} className = "px-3 py-2 rounded-xl border text-sm text-red-700 border-red-300" onClick = {() => setConfirmDeleteOpen(true)}>Delete person</button>
                 </div>
             </div>
 
@@ -446,6 +447,17 @@ export default function PersonDetail() {
                     </form>
                 </div>
             )}
+
+            <ConfirmModal 
+                open = {confirmDeleteOpen}
+                title = "Delete person?"
+                message = "This will delete the person and all their interactions"
+                confirmText = "Delete"
+                cancelText = "Cancel"
+                danger
+                onCancel= {() => setConfirmDeleteOpen(false)}
+                onConfirm = {handleDeletePerson}
+            />
         </div>
      )
 }

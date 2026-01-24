@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {useAuth} from "../context/AuthContext";
 import {useLocation, useNavigate} from "react-router-dom";
+import {useToast} from "../context/ToastContext";
 
 export default function Login() {
     const {login} = useAuth();
@@ -10,6 +11,7 @@ export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from || "/dashboard";
+    const {pushToast} = useToast();
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -20,6 +22,7 @@ export default function Login() {
             navigate(from, {replace: true});
         } catch (error) {
             setError(error.message);
+            pushToast({type: "error", message: error.message});
         }
     }
 
