@@ -7,6 +7,8 @@ import ConfirmModal from "../components/ConfirmModal.jsx";
 import {useToast} from "../context/ToastContext.jsx";
 import {formatDateTime} from "../utils/date.js";
 import {getErrorMessage} from "../utils/api.js";
+import {parseTopics} from "../utils/topics.js";
+import Modal from "../components/Modal.jsx";
 
 export default function PersonDetail() {
     const {id} = useParams();
@@ -80,7 +82,7 @@ export default function PersonDetail() {
         setSaving(true);
 
         try {
-            const topicList = topics.split(",").map((t) => t.trim()).filter(Boolean);
+            const topicList = parseTopics(topics);
 
             await interactionsApi.createInteraction({
                 person_id: person_id,
@@ -186,7 +188,7 @@ export default function PersonDetail() {
         setSavingInteraction(true);
 
         try {
-            const topicList = editInteractionTopics.split(",").map((t) => t.trim()).filter(Boolean);
+            const topicList = parseTopics(editInteractionTopics);
 
             await interactionsApi.updateInteraction(editingInteractionId, {
                 type: editInteractionType,
@@ -321,129 +323,125 @@ export default function PersonDetail() {
                 )}
             </div>
 
-            {logging && (
-                <div className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick = {() => {setLogging(false); setError("")}}>
-                    <form onSubmit = {handleAddInteraction} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl" onClick = {(e) => e.stopPropagation()}>
-                        <div className = "font-semibold">Log interaction</div>
+            <Modal open = {logging} onClose = {() => {setLogging(false); setError("")}}>
+                <form onSubmit = {handleAddInteraction} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl">
+                    <div className = "font-semibold">Log interaction</div>
 
-                        {error && <div className = "text-red-600">{error}</div>}
+                    {error && <div className = "text-red-600">{error}</div>}
 
-                        <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className = "block text-sm mb-1">Type</label>
+                    <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className = "block text-sm mb-1">Type</label>
 
-                                <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
-                                    <option value = "message">Message</option>
-                                    <option value = "call">Call</option>
-                                    <option value = "meeting">Meeting</option>
-                                    <option value = "other">Other</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className = "block text-sm mb-1">Topics (comma-separated)</label>
-
-                                <input 
-                                    className = "w-full border rounded-xl px-3 py-2" 
-                                    value = {topics} 
-                                    onChange = {(e) => setTopics(e.target.value)} 
-                                    placeholder = "e.g., school"/>
-                            </div>
+                            <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
+                                <option value = "message">Message</option>
+                                <option value = "call">Call</option>
+                                <option value = "meeting">Meeting</option>
+                                <option value = "other">Other</option>
+                            </select>
                         </div>
 
                         <div>
-                            <label className = "block text-sm mb-1">Notes</label>
-                            <textarea 
-                                className = "w-full border rounded-xl px-3 py-2"
-                                rows = {3}
-                                value = {notes}
-                                onChange = {(e) => setNotes(e.target.value)}
-                                placeholder = "What did you talk about?"
-                            />
+                            <label className = "block text-sm mb-1">Topics (comma-separated)</label>
+
+                            <input 
+                                className = "w-full border rounded-xl px-3 py-2" 
+                                value = {topics} 
+                                onChange = {(e) => setTopics(e.target.value)} 
+                                placeholder = "e.g., school"/>
                         </div>
+                    </div>
 
-                        <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {busy}>{saving ? "Saving..." : "Save interaction"}</button>
-                    </form>
-                </div>
-            )}
+                    <div>
+                        <label className = "block text-sm mb-1">Notes</label>
+                        <textarea 
+                            className = "w-full border rounded-xl px-3 py-2"
+                            rows = {3}
+                            value = {notes}
+                            onChange = {(e) => setNotes(e.target.value)}
+                            placeholder = "What did you talk about?"
+                        />
+                    </div>
 
-            {editing && (
-                <div className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick = {() => {setEditing(false); setError("")}}>
-                    <form onSubmit = {handleSavePerson} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl" onClick = {(e) => e.stopPropagation()}>
-                        <div className = "font-semibold">Edit person</div>
+                    <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {busy}>{saving ? "Saving..." : "Save interaction"}</button>
+                </form>
+            </Modal>
 
-                        {error && <div className = "text-red-600">{error}</div>}
+            <Modal open = {editing} onClose = {() => {setEditing(false); setError("")}}>
+                <form onSubmit = {handleSavePerson} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl">
+                    <div className = "font-semibold">Edit person</div>
 
-                        <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className = "block text-sm mb-1">Name</label>
+                    {error && <div className = "text-red-600">{error}</div>}
 
-                                <input 
-                                    className = "w-full border rounded-xl px-3 py-2"
-                                    value = {editName}
-                                    onChange = {(e) => setEditName(e.target.value)}
-                                    required
-                                />
-                            </div>
+                    <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className = "block text-sm mb-1">Name</label>
 
-                            <div>
-                                <label className = "block text-sm mb-1">Category</label>
-
-                                <select
-                                    className = "w-full border rounded-xl px-3 py-2"
-                                    value = {editCategory}
-                                    onChange = {(e) => setEditCategory(e.target.value)}
-                                >
-                                    <option value = "friend">Friend</option>
-                                    <option value = "family">Family</option>
-                                    <option value = "work">Work</option>
-                                    <option value = "other">Other</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className = "block text-sm mb-1">Contact frequency (days)</label>
-
-                                <input 
-                                    className = "w-full border rounded-xl px-3 py-2"
-                                    type = "number"
-                                    min = {1}
-                                    max = {3650}
-                                    value = {editFrequency}
-                                    onChange = {(e) => setEditFrequency(e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className = "block text-sm mb-1">Priority</label>
-
-                                <select
-                                    className = "w-full border rounded-xl px-3 py-2"
-                                    value = {editPriority}
-                                    onChange = {(e) => setEditPriority(e.target.value)}
-                                >
-                                    <option value = {1}>High (1)</option>
-                                    <option value = {2}>Normal (2)</option>
-                                    <option value = {3}>Low (3)</option>
-                                </select>
-                            </div>
+                            <input 
+                                className = "w-full border rounded-xl px-3 py-2"
+                                value = {editName}
+                                onChange = {(e) => setEditName(e.target.value)}
+                                required
+                            />
                         </div>
 
                         <div>
-                            <label className = "block text-sm mb-1">Notes</label>
+                            <label className = "block text-sm mb-1">Category</label>
 
-                            <textarea 
+                            <select
                                 className = "w-full border rounded-xl px-3 py-2"
-                                rows = {3}
-                                value = {editNotes}
-                                onChange = {(e) => setEditNotes(e.target.value)}
+                                value = {editCategory}
+                                onChange = {(e) => setEditCategory(e.target.value)}
+                            >
+                                <option value = "friend">Friend</option>
+                                <option value = "family">Family</option>
+                                <option value = "work">Work</option>
+                                <option value = "other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className = "block text-sm mb-1">Contact frequency (days)</label>
+
+                            <input 
+                                className = "w-full border rounded-xl px-3 py-2"
+                                type = "number"
+                                min = {1}
+                                max = {3650}
+                                value = {editFrequency}
+                                onChange = {(e) => setEditFrequency(e.target.value)}
                             />
                         </div>
 
-                        <button disabled = {busy} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
-                    </form>
-                </div>
-            )}
+                        <div>
+                            <label className = "block text-sm mb-1">Priority</label>
+
+                            <select
+                                className = "w-full border rounded-xl px-3 py-2"
+                                value = {editPriority}
+                                onChange = {(e) => setEditPriority(e.target.value)}
+                            >
+                                <option value = {1}>High (1)</option>
+                                <option value = {2}>Normal (2)</option>
+                                <option value = {3}>Low (3)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className = "block text-sm mb-1">Notes</label>
+
+                        <textarea 
+                            className = "w-full border rounded-xl px-3 py-2"
+                            rows = {3}
+                            value = {editNotes}
+                            onChange = {(e) => setEditNotes(e.target.value)}
+                        />
+                    </div>
+
+                    <button disabled = {busy} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
+                </form>
+            </Modal>
 
             <ConfirmModal 
                 open = {confirmDeleteOpen}
