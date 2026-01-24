@@ -1,23 +1,18 @@
-import {Link, useParams} from "react-router-dom";
+import {Link, useParams, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import * as peopleApi from "../api/people.api.js";
 import * as interactionsApi from "../api/interactions.api.js";
 import * as remindersApi from "../api/reminders.api.js";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import {useToast} from "../context/ToastContext.jsx";
-
-function formatDate(d) {
-    try {
-        return new Date(d).toLocaleString();
-    } catch {
-        return String(d)
-    }
-}
+import {formatDateTime} from "../utils/date.js";
+import {getErrorMessage} from "../utils/api.js";
 
 export default function PersonDetail() {
     const {id} = useParams();
     const person_id = Number(id);
     const {pushToast} = useToast();
+    const navigate = useNavigate();
 
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -58,7 +53,7 @@ export default function PersonDetail() {
             setEditFrequency(person.contact_frequency_days ?? 30);
             setEditPriority(person.priority ?? 2)
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -100,7 +95,7 @@ export default function PersonDetail() {
             setTopics("");
             setLogging(false);
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setSaving(false);
         }
@@ -113,7 +108,7 @@ export default function PersonDetail() {
             await interactionsApi.deleteInteraction(interaction_id);
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         }
      }
 
@@ -124,7 +119,7 @@ export default function PersonDetail() {
             await remindersApi.snooze(person_id, days);
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         }
      }
 
@@ -135,7 +130,7 @@ export default function PersonDetail() {
             await remindersApi.dismiss(person_id, days);
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         }
      }
 
@@ -156,7 +151,7 @@ export default function PersonDetail() {
             setEditing(false);
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setSavingPerson(false);
         }
@@ -169,10 +164,12 @@ export default function PersonDetail() {
         try {
             await peopleApi.deletePerson(person_id);
             pushToast({type: "info", message: "Person deleted."});
-            window.location.href = "/people";
+            
+            navigate("/people", {replace: true});
         } catch (error) {
-            pushToast({type: "error", message: error.message});
-            setError(error.message);
+            const message = getErrorMessage(error);
+            pushToast({type: "error", message: message});
+            setError(message);
         }
      }
 
@@ -200,7 +197,7 @@ export default function PersonDetail() {
             setEditingInteractionId(null);
             await load();
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setSavingInteraction(false);
         }
@@ -234,7 +231,7 @@ export default function PersonDetail() {
 
                     <div className = "text-sm opacity-70">{person.category || "uncategorized"} | priority {person.priority} | Every {" "}{person.contact_frequency_days} days</div>
                     <div className = "text-sm mt-2">Relationship score:{" "}{person.score_half_life_days ? `half-life ${person.score_half_life_days}d` : null}</div>
-                    <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDate(person.last_interaction_at): "never"}</div>
+                    <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDateTime(person.last_interaction_at): "never"}</div>
                 </div>
 
                 <div className = "flex flex-row gap-2">
@@ -264,7 +261,7 @@ export default function PersonDetail() {
                             <li key = {it.id} className = "border rounded-xl p-3">
                                 <div className = "flex items-start justify-between gap-3">
                                     <div>
-                                        <div className = "text-sm font-semibold"> {it.type}{" "}{formatDate(it.occurred_at)}</div>
+                                        <div className = "text-sm font-semibold"> {it.type}{" "}{formatDateTime(it.occurred_at)}</div>
 
                                         {it.notes && (<div className = "text-sm mt-1 whitespace-pre-wrap">{it.notes}</div>)}
 

@@ -1,14 +1,8 @@
 import {useEffect, useState } from "react";
 import * as topicsApi from '../api/topics.api.js'
 import {Link} from 'react-router-dom';
-
-function formatDate(d) {
-    try {
-        return new Date(d).toLocaleString();
-    } catch {
-        return String(d);
-    }
-}
+import {unwrapList, getErrorMessage} from "../utils/api.js";
+import {formatDateTime} from "../utils/date.js";
 
 export default function Topics() {
     const [query, setQuery] = useState("");
@@ -25,9 +19,9 @@ export default function Topics() {
 
         try {
             const data = await topicsApi.listTopics(query);
-            setTopics(Array.isArray(data) ? data : (data.topics ?? []));
+            setTopics(unwrapList(data, ["topics"]));
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setLoadingTopics(false)
         }
@@ -39,9 +33,9 @@ export default function Topics() {
 
         try {
             const data = await topicsApi.peopleForTopic(topic);
-            setPeople(Array.isArray(data) ? data : (data.people ?? []));
+            setPeople(unwrapList(data, ["people"]));
         } catch (error) {
-            setError(error.message);
+            setError(getErrorMessage(error));
         } finally {
             setLoadingPeople(false);
         }
@@ -107,7 +101,7 @@ export default function Topics() {
                                 <li key = {p.id} className = "border rounded-xl p-3">
                                     <Link to = {`/people/${p.id}`} className = "font-semibold hover:underline">{p.name}</Link>
                                     <div className = "text-sm opacity-70">{p.category || "uncategorized"} | priority {p.priority}</div>
-                                    <div className = "text-sm opacity-70 mt-1">Matches: {p.matching_interactions ?? "?"} | Last topic chat:{" "}{p.last_topic_interaction_at ? formatDate(p.last_topic_interaction_at) : "unknown"}</div>
+                                    <div className = "text-sm opacity-70 mt-1">Matches: {p.matching_interactions ?? "?"} | Last topic chat:{" "}{p.last_topic_interaction_at ? formatDateTime(p.last_topic_interaction_at) : "unknown"}</div>
                                 </li>
                             ))}
                         </ul>
