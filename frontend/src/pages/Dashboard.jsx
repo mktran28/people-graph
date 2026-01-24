@@ -16,6 +16,10 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [running, setRunning] = useState(false);
     const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
+    const [priorityFilter, setPriorityFilter] = useState("all");
+    const [overdueOnly, setOverdueOnly] = useState(false);
+    const [sortBy, setSortBy] = useState("priority");
 
     async function loadToday() {
         const data = await dailyApi.getToday();
@@ -60,6 +64,76 @@ export default function Dashboard() {
         }
     }
 
+    function daysBetween(a, b) {
+        const ms = 1000 * 60 * 60 * 24;
+        return Math.floor((a - b) / ms)
+    }
+
+    function countOverdueDays(person) {
+        const frequency = Number(person.contact_frequency_days ?? 30);
+
+        if (!person.last_interaction_at) {
+            return frequency
+        }
+
+        const lastInteractionDate = new Date(person.last_interaction_at).getTime();
+
+        if (Number.isNaN(lastInteractionDate)) {
+            return null;
+        }
+
+        const daysSince = daysBetween(Date.now(), lastInteractionDate)
+        return Math.max(0, daysSince - frequency);
+    }
+
+    const filtered = people
+        .filter((p) => {
+            const s = search.trim().toLowerCase();
+
+            if (s && !String(p.name ?? "").toLowerCase().includes(s)) {
+                return false;
+            }
+
+            if (priorityFilter !== "all" && String(p.priority) !== priorityFilter) {
+                return false;
+            }
+
+            if (overdueOnly) {
+                const overdue = countOverdueDays(p);
+
+                if (overdue === null || overdue <= 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        })
+        .sort((a, b) => {
+            if (sortBy === "score") {
+                return (b.relationship_score ?? 0) - (a.relationship_score ?? 0);
+            }
+
+            if (sortBy === "staleness") {
+                return (countOverdueDays(b) ?? 0) - (countOverdueDays(a) ?? 0);
+            }
+
+            const pa = Number(a.priority ?? 99)
+            const pb = Number(b.priority ?? 99);
+
+            if (pa !== pb) {
+                return pa - pb;
+            }
+
+            const oa = countOverdueDays(a) ?? 0;
+            const ob = countOverdueDays(b) ?? 0;
+
+            if (oa !== ob) {
+                return ob - oa;
+            }
+
+            return (b.relationship_score ?? 0) - (a.relationship_score ?? 0);
+        });
+
     if (loading) {
         return <div>Loading dashboard...</div>;
     }
@@ -79,24 +153,74 @@ export default function Dashboard() {
                 <button onClick = {runAndLoad} disabled = {running} className = "px-3 py-2 rounded-xl border text-sm disabled:opacity-70">{running ? "Refreshing...": "Refresh"}</button>
             </div>
 
-            {people.length === 0 ? (
+            <div className = "grid grid-cols-1 md:grid-cols-4 gap-3">
+                <input 
+                    className = "border rounded-xl px-3 py-2 text-sm"
+                    placeholder = "Filter people..."
+                    value = {search}
+                    onChange = {(e) => setSearch(e.target.value)}
+                />
+
+                <select
+                    className = "border rounded-xl px-3 py-2 text-sm"
+                    value = {priorityFilter}
+                    onChange = {(e) => setPriorityFilter(e.target.value)}
+                >
+                    <option value = "all">All priorities</option>
+                    <option value = "1">High (1)</option>
+                    <option value = "2">Medium (2)</option>
+                    <option value = "3">Low (3)</option>
+                </select>
+
+                <select
+                    className = "border rounded-xl px-3 py-2 text-sm"
+                    value = {sortBy}
+                    onChange = {(e) => setSortBy(e.target.value)}
+                >
+                    <option value = "priority">Sort: Priority</option>
+                    <option value = "staleness">Sort: Most overdue</option>
+                    <option value = "score">Sort: Highest score</option>
+                </select>
+
+                <label className = "flex items-center gap-2 text-sm">
+                    <input 
+                        type = "checkbox"
+                        checked = {overdueOnly}
+                        onChange = {(e) => setOverdueOnly(e.target.checked)}
+                    />
+                    Overdue only
+                </label>
+            </div>
+
+            {filtered.length === 0 ? (
                 <div className = "text-sm opacity-70">No one is overdue today</div>
             ) : (
                 <ul className = "space-y-3">
-                    {people.map((p) => (
-                        <li key = {p.id} className = "border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
-                                <Link to = {`/people/${p.id}`} className = "font-semibold hover:underline">{p.name}</Link>
-                                <div className = "text-sm opacity-70"> Priority {p.priority} every {p.contact_frequency_days} days</div>
-                                <div className = "text-sm opacity-70"> Score:{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDate(p.last_interaction_at) : "never"}</div>
-                            </div>
+                    {filtered.map((p) => {
+                        const overdue = countOverdueDays(p);
 
-                            <div className = "flex gap-2">
-                                <button className = "px-2 py-1 text-sm rounded-xl border" onClick = {() => handleSnooze(p.id, 7)}>Snooze</button>
-                                <button className = "px-2 py-1 text-sm rounded-xl border" onClick = {() => handleDismiss(p.id, 30)}>Dismiss</button>
-                            </div>
-                        </li>
-                    ))}
+                        return (
+                            <li key = {p.id} className = "border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <Link to = {`/people/${p.id}`} className = "font-semibold hover:underline">{p.name}</Link>
+                                    <div className = "text-sm opacity-70"> Priority {p.priority} every {p.contact_frequency_days} days</div>
+                                    <div className = "text-sm opacity-70"> Score:{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDate(p.last_interaction_at) : "never"}</div>
+                                    <div className = "text-sm opacity-70">
+                                        {p.last_interaction_at ? (
+                                            <>Overdue by {overdue ?? 0} days </>
+                                        ) : (
+                                            <>No interactions yet</>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className = "flex gap-2">
+                                    <button className = "px-2 py-1 text-sm rounded-xl border" onClick = {() => handleSnooze(p.id, 7)}>Snooze</button>
+                                    <button className = "px-2 py-1 text-sm rounded-xl border" onClick = {() => handleDismiss(p.id, 30)}>Dismiss</button>
+                                </div>
+                            </li>
+                        )
+                    })}
                 </ul>
             )}
         </div>
