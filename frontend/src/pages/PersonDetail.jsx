@@ -77,7 +77,7 @@ export default function PersonDetail() {
         return () => {
             document.body.style.overflow = "auto";
         };
-    }, [editing, logging])
+    }, [editing, logging, confirmDeleteOpen])
 
     async function handleAddInteraction(e) {
         e.preventDefault();
