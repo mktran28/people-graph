@@ -1,21 +1,25 @@
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {Link} from "react-router-dom";
 import * as peopleApi from "../api/people.api.js"
 import {getErrorMessage, unwrapList} from "../utils/api.js";
 import {formatDateOnly} from "../utils/date.js";
 import Modal from "../components/Modal.jsx";
 import PersonModal from "../components/PersonModal.jsx";
+import {filterAndSortPeople} from '../utils/filter.js';
+import PeopleFilter from "../components/PeopleFilter.jsx";
 
 function priorityLabel(p) {
-    if (p === 1) {
+    const n = Number(p);
+
+    if (n === 1) {
         return "High";
     }
 
-    if (p === 2) {
+    if (n === 2) {
         return "Normal";
     }
 
-    if (p === 3) {
+    if (n === 3) {
         return "Low";
     }
 
@@ -33,6 +37,14 @@ export default function People() {
     const [priority, setPriority] = useState("2");
     const [saving, setSaving] = useState(false);
     const [addingPerson, setAddingPerson] = useState(false);
+    const [search, setSearch] = useState("");
+    const [priorityFilter, setPriorityFilter] = useState("all");
+    const [overdueOnly, setOverdueOnly] = useState(false);
+    const [sortBy, setSortBy] = useState("priority");
+    const filtered = useMemo(
+        () => filterAndSortPeople(people, {search, priorityFilter, sortBy, overdueOnly}),
+        [people, search, priorityFilter, sortBy, overdueOnly]
+    );
 
     async function load() {
         try {
@@ -106,13 +118,26 @@ export default function People() {
 
             {error && <div className = "text-red-600">{error}</div>}
 
+            <PeopleFilter 
+                search = {search}
+                setSearch = {setSearch}
+                priorityFilter = {priorityFilter}
+                setPriorityFilter = {setPriorityFilter}
+                sortBy = {sortBy}
+                setSortBy = {setSortBy}
+                overdueOnly = {overdueOnly}
+                setOverdueOnly = {setOverdueOnly}
+            />
+
             {loading ? (
                 <div>Loading people...</div>
             ) : people.length === 0 ? (
-                <div className = "text-sm opacity-70">Add the first person.</div>
+                <div className = "text-sm opacity-70">Add the first person</div>
+            ) : filtered.length === 0 ? (
+                <div className = "text-sm opacity-70">No matches</div>
             ) : (
                 <ul className = "space-y-3">
-                    {people.map((p) => (
+                    {filtered.map((p) => (
                         <li key = {p.id} className = "border rounded-lg p-4 bg-white shadow-sm">
                             <div className = "flex items-start justify-between gap-4">
                                 <div className = "min-w-0">
