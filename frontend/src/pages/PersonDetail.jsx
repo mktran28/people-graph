@@ -55,8 +55,8 @@ export default function PersonDetail() {
             setEditName(person.name ?? "");
             setEditCategory(person.category ?? "");
             setEditNotes(person.notes ?? "");
-            setEditFrequency(person.contact_frequency_days ?? 30);
-            setEditPriority(person.priority ?? 2)
+            setEditFrequency(String(person.contact_frequency_days ?? 30));
+            setEditPriority(String(person.priority ?? 2));
         } catch (error) {
             setError(getErrorMessage(error));
         } finally {
@@ -71,7 +71,7 @@ export default function PersonDetail() {
     }, [person_id])
 
     useEffect(() => {
-        const openModal = editing || logging;
+        const openModal = editing || logging || confirmDeleteOpen;
         document.body.style.overflow = openModal ? "hidden" : "auto";
 
         return () => {
@@ -305,16 +305,17 @@ export default function PersonDetail() {
                 />
             </Modal>
 
-            <ConfirmModal 
-                open = {confirmDeleteOpen}
-                title = "Delete person?"
-                message = "This will delete the person and all their interactions"
-                confirmText = "Delete"
-                cancelText = "Cancel"
-                danger
-                onCancel= {() => setConfirmDeleteOpen(false)}
-                onConfirm = {handleDeletePerson}
-            />
+            <Modal open = {confirmDeleteOpen} onClose = {() => setConfirmDeleteOpen(false)}>
+                <ConfirmModal 
+                    title = "Delete person?"
+                    message = "This will delete the person and all their interactions"
+                    confirmText = "Delete"
+                    cancelText = "Cancel"
+                    danger
+                    onCancel= {() => setConfirmDeleteOpen(false)}
+                    onConfirm = {handleDeletePerson}
+                />
+            </Modal>
         </div>
      )
 }
