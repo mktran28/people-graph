@@ -1,6 +1,9 @@
 import {formatDateTime} from "../utils/date"
 
-export default function InteractionsList({recent_interactions, editingInteractionId, editInteractionType,
+export default function InteractionsList({
+    interactions, 
+    editingInteractionId, 
+    editInteractionType,
     setEditInteractionType,
     editInteractionTopics,
     setEditInteractionTopics,
@@ -17,11 +20,11 @@ export default function InteractionsList({recent_interactions, editingInteractio
         <div className = "border rounded-xl p-4">
             <div className = "font-semibold mb-3">Recent interactions</div>
 
-            {recent_interactions.length === 0 ? (
+            {interactions.length === 0 ? (
                 <div className = "text-sm opacity-70">No interactions yet.</div>
             ) : (
                 <ul className = "space-y-3">
-                    {recent_interactions.map((it) => (
+                    {interactions.map((it) => (
                         <li key = {it.id} className = "border rounded-xl p-3">
                             <div className = "flex items-start justify-between gap-3">
                                 <div>

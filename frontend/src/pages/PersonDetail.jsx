@@ -3,13 +3,15 @@ import {useEffect, useState} from "react";
 import * as peopleApi from "../api/people.api.js";
 import * as interactionsApi from "../api/interactions.api.js";
 import * as remindersApi from "../api/reminders.api.js";
-import ConfirmModal from "../components/ConfirmModal.jsx";
 import {useToast} from "../context/ToastContext.jsx";
 import {formatDateTime} from "../utils/date.js";
 import {getErrorMessage} from "../utils/api.js";
 import {parseTopics} from "../utils/topics.js";
+import ConfirmModal from "../components/ConfirmModal.jsx";
 import Modal from "../components/Modal.jsx";
 import InteractionsList from "../components/InteractionsList.jsx";
+import InteractionModal from "../components/InteractionModal.jsx";
+import PersonModal from "../components/PersonModal.jsx";
 
 export default function PersonDetail() {
     const {id} = useParams();
@@ -29,8 +31,8 @@ export default function PersonDetail() {
     const [editName, setEditName] = useState("");
     const [editCategory, setEditCategory] = useState("");
     const [editNotes, setEditNotes] = useState("");
-    const [editFrequency, setEditFrequency] = useState(30);
-    const [editPriority, setEditPriority] = useState(2);
+    const [editFrequency, setEditFrequency] = useState("30");
+    const [editPriority, setEditPriority] = useState("2");
     const [savingPerson, setSavingPerson] = useState(false);
     const [editingInteractionId, setEditingInteractionId] = useState(null);
     const [editInteractionType, setEditInteractionType] = useState("message");
@@ -232,7 +234,7 @@ export default function PersonDetail() {
 
                     <h1 className = "text-2xl font-bold mt-1">{person.name}</h1>
 
-                    <div className = "text-sm opacity-70">{person.category || "uncategorized"} | priority {person.priority} | Every {" "}{person.contact_frequency_days} days</div>
+                    <div className = "text-sm opacity-70">{person.category || "uncategorized"} | Priority {person.priority} | Every {" "}{person.contact_frequency_days} days</div>
                     <div className = "text-sm mt-2">Relationship score:{" "}{person.score_half_life_days ? `half-life ${person.score_half_life_days}d` : null}</div>
                     <div className = "text-sm">Last interaction:{" "}{person.last_interaction_at ? formatDateTime(person.last_interaction_at): "never"}</div>
                 </div>
@@ -254,7 +256,7 @@ export default function PersonDetail() {
             )}
 
             <InteractionsList 
-                recent_interactions = {recent_interactions}
+                interactions = {recent_interactions}
                 editingInteractionId = {editingInteractionId}
                 editInteractionType = {editInteractionType}
                 setEditInteractionType = {setEditInteractionType}
@@ -271,123 +273,36 @@ export default function PersonDetail() {
             />
 
             <Modal open = {logging} onClose = {() => {setLogging(false); setError("")}}>
-                <form onSubmit = {handleAddInteraction} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl">
-                    <div className = "font-semibold">Log interaction</div>
-
-                    {error && <div className = "text-red-600">{error}</div>}
-
-                    <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className = "block text-sm mb-1">Type</label>
-
-                            <select className = "w-full border rounded-xl px-3 py-2" value = {type} onChange = {(e) => setType(e.target.value)}>
-                                <option value = "message">Message</option>
-                                <option value = "call">Call</option>
-                                <option value = "meeting">Meeting</option>
-                                <option value = "other">Other</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className = "block text-sm mb-1">Topics (comma-separated)</label>
-
-                            <input 
-                                className = "w-full border rounded-xl px-3 py-2" 
-                                value = {topics} 
-                                onChange = {(e) => setTopics(e.target.value)} 
-                                placeholder = "e.g., school"/>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className = "block text-sm mb-1">Notes</label>
-                        <textarea 
-                            className = "w-full border rounded-xl px-3 py-2"
-                            rows = {3}
-                            value = {notes}
-                            onChange = {(e) => setNotes(e.target.value)}
-                            placeholder = "What did you talk about?"
-                        />
-                    </div>
-
-                    <button className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70" disabled = {busy}>{saving ? "Saving..." : "Save interaction"}</button>
-                </form>
+                <InteractionModal 
+                    onAdd = {handleAddInteraction}
+                    error = {error}
+                    type = {type}
+                    setType = {setType}
+                    topics = {topics}
+                    setTopics = {setTopics}
+                    notes = {notes}
+                    setNotes = {setNotes}
+                    busy = {busy}
+                    saving = {saving}
+                />
             </Modal>
 
             <Modal open = {editing} onClose = {() => {setEditing(false); setError("")}}>
-                <form onSubmit = {handleSavePerson} className = "bg-white w-full max-w-xl mx-auto rounded-xl p-6 space-y-4 shadow-xl">
-                    <div className = "font-semibold">Edit person</div>
-
-                    {error && <div className = "text-red-600">{error}</div>}
-
-                    <div className = "grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className = "block text-sm mb-1">Name</label>
-
-                            <input 
-                                className = "w-full border rounded-xl px-3 py-2"
-                                value = {editName}
-                                onChange = {(e) => setEditName(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className = "block text-sm mb-1">Category</label>
-
-                            <select
-                                className = "w-full border rounded-xl px-3 py-2"
-                                value = {editCategory}
-                                onChange = {(e) => setEditCategory(e.target.value)}
-                            >
-                                <option value = "friend">Friend</option>
-                                <option value = "family">Family</option>
-                                <option value = "work">Work</option>
-                                <option value = "other">Other</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className = "block text-sm mb-1">Contact frequency (days)</label>
-
-                            <input 
-                                className = "w-full border rounded-xl px-3 py-2"
-                                type = "number"
-                                min = {1}
-                                max = {3650}
-                                value = {editFrequency}
-                                onChange = {(e) => setEditFrequency(e.target.value)}
-                            />
-                        </div>
-
-                        <div>
-                            <label className = "block text-sm mb-1">Priority</label>
-
-                            <select
-                                className = "w-full border rounded-xl px-3 py-2"
-                                value = {editPriority}
-                                onChange = {(e) => setEditPriority(e.target.value)}
-                            >
-                                <option value = "1">High (1)</option>
-                                <option value = "2">Normal (2)</option>
-                                <option value = "3">Low (3)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className = "block text-sm mb-1">Notes</label>
-
-                        <textarea 
-                            className = "w-full border rounded-xl px-3 py-2"
-                            rows = {3}
-                            value = {editNotes}
-                            onChange = {(e) => setEditNotes(e.target.value)}
-                        />
-                    </div>
-
-                    <button disabled = {busy} className = "px-4 py-2 rounded-xl bg-black text-white disabled:opacity-70">{savingPerson ? "Saving" : "Save changes"}</button>
-                </form>
+                <PersonModal 
+                    onSubmit = {handleSavePerson}
+                    error = {error}
+                    name = {editName}
+                    setName = {setEditName}
+                    category = {editCategory}
+                    setCategory = {setEditCategory}
+                    contactFrequencyDays = {editFrequency}
+                    setContactFrequencyDays = {setEditFrequency}
+                    priority = {editPriority}
+                    setPriority = {setEditPriority}
+                    notes = {editNotes}
+                    setNotes = {setEditNotes}
+                    saving = {savingPerson}
+                />
             </Modal>
 
             <ConfirmModal 
