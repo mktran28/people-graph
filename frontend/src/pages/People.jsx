@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 import * as peopleApi from "../api/people.api.js"
 import {getErrorMessage, unwrapList} from "../utils/api.js";
@@ -28,14 +28,10 @@ export default function People() {
     const [name, setName] = useState("");
     const [category, setCategory] = useState("friend");
     const [notes, setNotes] = useState("");
-    const [contactFrequencyDays, setContactFrequencyDays] = useState(30);
-    const [priority, setPriority] = useState(2);
+    const [contactFrequencyDays, setContactFrequencyDays] = useState("30");
+    const [priority, setPriority] = useState("2");
     const [saving, setSaving] = useState(false);
     const [addingPerson, setAddingPerson] = useState(false);
-
-    const sorted = useMemo(() => {
-        return [...people];
-    }, [people]);
 
     async function load() {
         try {
@@ -84,8 +80,8 @@ export default function People() {
             setName("");
             setCategory("friend");
             setNotes("");
-            setContactFrequencyDays(30);
-            setPriority(2);
+            setContactFrequencyDays("30");
+            setPriority("2");
             setAddingPerson(false);
 
             await load();
@@ -111,11 +107,11 @@ export default function People() {
 
             {loading ? (
                 <div>Loading people...</div>
-            ) : sorted.length === 0 ? (
+            ) : people.length === 0 ? (
                 <div className = "text-sm opacity-70">Add the first person.</div>
             ) : (
                 <ul className = "space-y-3">
-                    {sorted.map((p) => (
+                    {people.map((p) => (
                         <li key = {p.id} className = "border rounded-lg p-4 bg-white shadow-sm">
                             <div className = "flex items-start justify-between gap-4">
                                 <div className = "min-w-0">
@@ -218,9 +214,9 @@ export default function People() {
                                 value = {priority}
                                 onChange = {(e) => setPriority(e.target.value)}
                             >
-                                <option value = {1}>High (1)</option>
-                                <option value = {2}>Normal (2)</option>
-                                <option value = {3}>Low (3)</option>
+                                <option value = "1">High (1)</option>
+                                <option value = "2">Normal (2)</option>
+                                <option value = "3">Low (3)</option>
                             </select>
                         </div>
                     </div>

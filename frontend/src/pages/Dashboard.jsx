@@ -201,10 +201,14 @@ export default function Dashboard() {
                                 <div>
                                     <Link to = {`/people/${p.id}`} className = "font-semibold hover:underline">{p.name}</Link>
                                     <div className = "text-sm opacity-70"> Priority {p.priority} every {p.contact_frequency_days} days</div>
-                                    <div className = "text-sm opacity-70"> Score:{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDateTime(p.last_interaction_at) : "never"}</div>
+                                    <div className = "text-sm opacity-70"> Score:{" "}{p.relationship_score ?? 0} | Last:{" "}{p.last_interaction_at ? formatDateTime(p.last_interaction_at) : "never"}</div>
                                     <div className = "text-sm opacity-70">
                                         {p.last_interaction_at ? (
-                                            <>Overdue by {overdue ?? 0} days </>
+                                            overdue > 0 ? (
+                                                <>Overdue by {overdue} days</>
+                                            ) : (
+                                                <>Due today</>
+                                            )
                                         ) : (
                                             <>No interactions yet</>
                                         )}
