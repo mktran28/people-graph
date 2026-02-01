@@ -1,9 +1,6 @@
 # PeopleGraph
 
-**Full-stack relationship intelligence web application**
-
-PeopleGraph is a full-stack relationship intelligence web application that models **people and interactions as time-based events** and computes **derived relationship signals** using SQL.
-
+PeopleGraph is a **full-stack relationship intelligence web application** that models **people and interactions as time-based events** and computes **derived relationship signals** using SQL.
 
 ## Tech Stack
 
@@ -40,8 +37,6 @@ PeopleGraph is a full-stack relationship intelligence web application that model
 - Node.js (v18+ recommended)
 - PostgreSQL
 - npm
-
-### Setup
 
 ### Setup
 
