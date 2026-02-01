@@ -1,16 +1,68 @@
-# React + Vite
+# PeopleGraph
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Full-stack relationship intelligence web application**
 
-Currently, two official plugins are available:
+PeopleGraph is a full-stack relationship intelligence web application that models **people and interactions as time-based events** and computes **derived relationship signals** using SQL.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Backend
+- Node.js
+- Express.js
+- PostgreSQL
+- REST APIs
 
-## Expanding the ESLint configuration
+### Frontend
+- React
+- Tailwind CSS
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Features
+
+### Core Functionality
+- **People management**
+  - Create, update, delete, and view people records
+- **Interaction logging**
+  - Log messages, calls, meetings, and notes as time-based events
+- **Derived relationship signals**
+  - Relationship strength score computed via SQL
+  - Interaction counts per person
+
+### Backend Quality
+- Event-driven data modeling
+- Clean separation of concerns (routes → controllers → models)
+- Input validation with meaningful HTTP status codes
+- Centralized error handling
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- PostgreSQL
+- npm
+
+### Setup
+
+```bash
+cd backend
+npm install
+
+### Create a .env file in backend/:
+
+```bash
+DATABASE_URL=postgresql://username:password@localhost:5432/peopledb
+PORT=8000
+
+### Start the development server:
+
+```bash
+npm run dev
+
+### The API will be available at:
+
+```bash
+http://localhost:8000
