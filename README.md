@@ -17,8 +17,6 @@ PeopleGraph is a full-stack relationship intelligence web application that model
 - React
 - Tailwind CSS
 
----
-
 ## Features
 
 ### Core Functionality
@@ -36,8 +34,6 @@ PeopleGraph is a full-stack relationship intelligence web application that model
 - Input validation with meaningful HTTP status codes
 - Centralized error handling
 
----
-
 ## Getting Started
 
 ### Prerequisites
@@ -47,22 +43,44 @@ PeopleGraph is a full-stack relationship intelligence web application that model
 
 ### Setup
 
-```bash
-cd backend
-npm install
+### Setup
 
-### Create a .env file in backend/:
+1. Install backend dependencies
 
-```bash
-DATABASE_URL=postgresql://username:password@localhost:5432/peopledb
-PORT=8000
+    ```bash
+    cd backend
+    npm install
+    ```
 
-### Start the development server:
+2. Create a `.env` file in `backend/`
 
-```bash
-npm run dev
+    ```bash
+    DATABASE_URL=postgresql://username:password@localhost:5432/peopledb
+    PORT=8000
+    ```
 
-### The API will be available at:
+3. Start the backend server
 
-```bash
-http://localhost:8000
+    ```bash
+    npm run dev
+    ```
+
+4. Install frontend dependencies (new terminal)
+
+    ```bash
+    cd frontend
+    npm install
+    ```
+
+5. Start the frontend development server
+
+    ```bash
+    npm run dev
+    ```
+
+6. Open the application
+
+    ```bash
+    Frontend: http://localhost:5173
+    Backend API: http://localhost:8000
+    ```
